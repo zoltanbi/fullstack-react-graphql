@@ -6,6 +6,9 @@ import "dotenv/config";
 import mikroConfig from "./mikro-orm.config";
 import express from "express";
 import { ApolloServer } from "apollo-server-express";
+import {
+    ApolloServerPluginLandingPageGraphQLPlayground
+  } from "apollo-server-core";
 import { buildSchema } from "type-graphql";
 import { HelloResolver } from "./resolvers/hello";
 import { PostResolver } from "./resolvers/post";
@@ -35,9 +38,10 @@ const main = async () => {
         maxAge: 1000 * 60 * 60 * 24 * 365 * 10, // 10 years
         httpOnly: true,
         sameSite: "lax", //csrf
-        secure: __prod__, // cookie only works in https
+        secure: false,
+        //secure: __prod__, // cookie only works in https
       },
-      //saveUninitialized: false,
+      saveUninitialized: false,
       secret: "keyboard cat",
       resave: false,
     })
@@ -50,6 +54,9 @@ const main = async () => {
     }),
     context: ({ req, res }): MyContext => ({ em: orm.em, req, res }),
     introspection: true,
+    plugins: [
+        ApolloServerPluginLandingPageGraphQLPlayground(),
+    ]
   });
 
   await apolloServer.start();
