@@ -6,9 +6,7 @@ import "dotenv/config";
 import mikroConfig from "./mikro-orm.config";
 import express from "express";
 import { ApolloServer } from "apollo-server-express";
-import {
-    ApolloServerPluginLandingPageGraphQLPlayground
-  } from "apollo-server-core";
+import { ApolloServerPluginLandingPageGraphQLPlayground } from "apollo-server-core";
 import { buildSchema } from "type-graphql";
 import { HelloResolver } from "./resolvers/hello";
 import { PostResolver } from "./resolvers/post";
@@ -17,6 +15,7 @@ import redis from "redis";
 import session from "express-session";
 import connectRedis from "connect-redis";
 import { MyContext } from "./types";
+import cors from 'cors';
 
 const main = async () => {
   const orm = await MikroORM.init(mikroConfig);
@@ -26,6 +25,12 @@ const main = async () => {
 
   const RedisStore = connectRedis(session);
   const redisClient = redis.createClient();
+
+  //apply middleware to all routes
+  app.use(cors({
+    origin: 'http://localhost:3000',
+    credentials: true,
+  }))
 
   app.use(
     session({
@@ -54,17 +59,18 @@ const main = async () => {
     }),
     context: ({ req, res }): MyContext => ({ em: orm.em, req, res }),
     introspection: true,
-    plugins: [
-        ApolloServerPluginLandingPageGraphQLPlayground(),
-    ]
+    plugins: [ApolloServerPluginLandingPageGraphQLPlayground()],
   });
 
   await apolloServer.start();
 
-  apolloServer.applyMiddleware({ app });
+  apolloServer.applyMiddleware({
+    app,
+    cors: false,
+  });
 
-  app.listen(3000, () => {
-    console.log("server started on localhost:3000");
+  app.listen(4000, () => {
+    console.log("server started on localhost:4000");
   });
 };
 
